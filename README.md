@@ -1,1 +1,1 @@
-Track visitor data.
+A server to track visitor data.
