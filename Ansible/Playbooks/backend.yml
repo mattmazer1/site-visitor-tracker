@@ -1,0 +1,147 @@
+- name: Initial setup
+  hosts: _ApiServer
+  become: true
+  vars:
+    ansible_connection: aws_ssm
+    ansible_aws_ssm_bucket_name: ansible-bucket-psite
+    ansible_aws_ssm_region: ap-southeast-2
+  vars_files:
+    - ./vars/secrets.yml
+  tasks:
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+          - python3-venv
+          - python3-pip
+        update_cache: true
+
+    - name: Create a virtual environment
+      ansible.builtin.command:
+        cmd: python3 -m venv /opt/myenv
+        creates: /opt/myenv
+
+    - name: Install psycopg2-binary, boto3 and botocore in the virtual env
+      ansible.builtin.pip:
+        name:
+          - psycopg2-binary
+          - boto3
+          - botocore
+        virtualenv: /opt/myenv
+
+    - name: Get database host info
+      amazon.aws.rds_instance_info:
+        region: ap-southeast-2
+      environment:
+        PYTHONPATH: /opt/myenv/lib/python3.12/site-packages
+      register: db_host_url
+
+    - name: Set host fact
+      ansible.builtin.set_fact:
+        db_host: "{{ db_host_url.instances[0].endpoint.address }}"
+
+- name: Setup docker
+  hosts: _ApiServer
+  become: true
+  vars:
+    ansible_connection: aws_ssm
+    ansible_aws_ssm_bucket_name: ansible-bucket-psite
+    ansible_aws_ssm_region: ap-southeast-2
+    db_name: site_data_store
+    db_user: postgres
+    db_port: 5432
+  vars_files:
+    - ./vars/secrets.yml
+    - ./var/db_vars.yml
+  tasks:
+    - name: Create directory for apt keyrings
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Download Docker GPG key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Add Docker repository to apt sources
+      ansible.builtin.shell: |
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+      tags:
+        - skip_ansible_lint
+
+    - name: Install Docker engine and related packages
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        update_cache: true
+
+    - name: Pull docker image
+      community.docker.docker_image_pull:
+        name: mattmazer1/psite-server
+        platform: amd64
+
+    - name: Run container
+      community.docker.docker_container:
+        name: psite-server
+        image: mattmazer1/psite-server
+        detach: true
+        env:
+          DATABASE_URL: "postgres://{{ db_user }}:{{ db_password }}@{{ db_host }}:{{ db_port }}/{{ db_name }}"
+        ports:
+          - "8080:8080"
+
+- name: Initialise database
+  hosts: _ApiServer
+  become: true
+  vars:
+    ansible_connection: aws_ssm
+    ansible_aws_ssm_bucket_name: ansible-bucket-psite
+    ansible_aws_ssm_region: ap-southeast-2
+    sql_script_path: /tmp/script.sql
+  vars_files:
+    - ./vars/secrets.yml
+    - ./vars/db_vars.yml
+  tasks:
+    - name: Copy SQL script to remote host
+      ansible.builtin.copy:
+        src: /home/runner/work/site-visitor-tracker/site-visitor-tracker/Backend/src/db-scripts/init.sql
+        dest: "{{ sql_script_path }}"
+        mode: "0644"
+
+    - name: Check if initialisation is needed
+      community.postgresql.postgresql_query:
+        db: "{{ db_name }}"
+        login_host: "{{ db_host }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+        port: "{{ db_port }}"
+        query: "SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.tables
+          WHERE table_schema = 'public'
+          AND table_name = 'userdata');"
+      environment:
+        PYTHONPATH: /opt/myenv/lib/python3.12/site-packages
+      register: query_result
+
+    - name: Initialise database
+      community.postgresql.postgresql_script:
+        db: "{{ db_name }}"
+        path: "{{ sql_script_path }}"
+        login_host: "{{ db_host }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+        port: "{{ db_port }}"
+      environment:
+        PYTHONPATH: /opt/myenv/lib/python3.12/site-packages
+      when: query_result.query_result[0].exists == false
+      tags:
+        - skip_ansible_lint

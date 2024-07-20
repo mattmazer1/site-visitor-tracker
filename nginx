@@ -1,0 +1,45 @@
+limit_req_zone $binary_remote_addr zone=mylimit:10m rate=2r/m;
+
+server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        root /var/www/html;
+
+        index index.html index.htm index.nginx-debian.html;
+
+        server_name visit.mattmazer.dev;
+
+        sub_filter_types text/html application/javascript text/javascript;
+        sub_filter '{{API_URL_PLACEHOLDER}}' 'https://visit.mattmazer.dev/get-data';
+        sub_filter_once off;
+
+        location / {
+                try_files $uri $uri/ =404;
+        }
+
+        location /add-visit {
+        limit_req zone=mylimit;
+        proxy_pass http://internal-ip:8080/add-visit;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+
+        add_header 'Access-Control-Allow-Origin' 'https://www.mattmazer.dev';
+        add_header 'Access-Control-Allow-Methods' 'POST, OPTIONS';
+        add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept';
+
+        if ($request_method = 'OPTIONS') {
+            return 204;
+        }
+        }
+
+        location /get-data {
+        proxy_pass http://internal-ip:8080/user-data;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        }
+}

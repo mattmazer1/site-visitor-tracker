@@ -1,0 +1,84 @@
+name: Deploy and configure infra
+run-name: Setting up infra
+on:
+  workflow_run:
+    workflows: [Push to DockerHub]
+    types: [completed]
+
+jobs:
+  Build-infra:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Check out this repository
+        uses: actions/checkout@v3
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform format
+        working-directory: ./Terraform
+        run: terraform fmt -check
+        continue-on-error: true
+
+      - name: Terraform initialise
+        working-directory: ./Terraform
+        run: terraform init
+
+      - name: Terraform validate
+        working-directory: ./Terraform
+        run: terraform validate
+
+      - name: Terraform plan
+        working-directory: ./Terraform
+        run: terraform plan
+        continue-on-error: false
+
+      - name: Terraform apply
+        working-directory: ./Terraform
+        run: terraform apply -auto-approve
+        continue-on-error: false
+
+  Configure-infra:
+    needs: Build-infra
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-southeast-2
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install Ansible and its dependancies
+        run: |
+          pip install ansible
+          pip install boto3
+          pip install botocore
+
+      - name: Check out this repository
+        uses: actions/checkout@v3
+
+      - name: Create vault password file
+        working-directory: ${{ github.workspace }}/Ansible
+        run: echo ${{ secrets.VAULT_PASSWORD }} > vault_password.txt
+
+      - name: Configure frontend server
+        working-directory: ${{ github.workspace }}/Ansible
+        run: ansible-playbook -i aws_ec2.yml --vault-password-file vault_password.txt ./Playbooks/frontend.yml -vvv
+
+      - name: Configure backend server and db
+        working-directory: ${{ github.workspace }}/Ansible
+        run: ansible-playbook -i aws_ec2.yml --vault-password-file vault_password.txt ./Playbooks/backend.yml -vvv
+
+      - name: Delete vault password file
+        working-directory: ${{ github.workspace }}/Ansible
+        run: rm vault_password.txt

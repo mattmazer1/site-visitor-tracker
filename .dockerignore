@@ -1,0 +1,11 @@
+.git
+.github
+.gitignore
+.env
+.README.md
+.vscode
+Terraform
+Ansible
+Frontend
+nginx
+vault_password.txt

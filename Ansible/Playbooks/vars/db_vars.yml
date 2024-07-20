@@ -1,0 +1,3 @@
+db_name: site_data_store
+db_user: postgres
+db_port: 5432
