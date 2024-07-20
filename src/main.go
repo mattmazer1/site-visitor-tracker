@@ -21,6 +21,10 @@ type getHandler struct {
 type postHandler struct {
 }
 
+func healthHandler() {
+
+}
+
 func (h *getHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Println("Fetching data.....")
 
