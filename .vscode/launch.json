@@ -1,0 +1,12 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Go debugger",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "/Users/mattmazer/Documents/Projects/site-visitor-tracker/src"
+        }
+    ]
+}

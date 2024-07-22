@@ -8,10 +8,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-DATABASE_URL := "postgresurlhere"
-
 func Connect() {
-	dbpool, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
+	testing := os.Getenv("DB_CONNECTION_URL")
+	fmt.Println("testing babyyyyyy")
+	fmt.Println(testing)
+	// password := os.Getenv("PASSWORD")
+	// if password == "" {
+	// 	log.Fatal("PASSWORD environment variable not set")
+	// }
+	dbpool, err := pgxpool.New(context.Background(), os.Getenv("DB_CONNECTION_URL"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to create connection pool: %v\n", err)
 		os.Exit(1)
@@ -19,7 +24,7 @@ func Connect() {
 	defer dbpool.Close()
 
 	var greeting string
-	err = dbpool.QueryRow(context.Background(), "select 'Hello, world!'").Scan(&greeting)
+	err = dbpool.QueryRow(context.Background(), "select * from UserVisitCount").Scan(&greeting)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
 		os.Exit(1)
