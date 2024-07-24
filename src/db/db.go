@@ -46,6 +46,12 @@ func Connect() error {
 	}
 	fmt.Println(commandTag)
 
+	rows, _ := conn.Query(context.Background(), "select * from userdata")
+	numbers, err := pgx.CollectRows(rows, pgx.RowTo[int32])
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
