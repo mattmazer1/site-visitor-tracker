@@ -36,7 +36,10 @@ func Connect() error {
 	// 	os.Exit(1)
 	// }
 
-	commandTag, err := conn.Exec(context.Background(), "insert into uservisitcount (count) values ($1)", 5) //fetch and update in same query
+	commandTag, err := conn.Exec(context.Background(), "WITH current_count AS (
+		SELECT count
+		FROM uservisitcount)
+		insert into uservisitcount (count) values ((SELECT count FROM current_count) + $1)", 5)
 	if err != nil {
 		return err
 	}
@@ -47,10 +50,14 @@ func Connect() error {
 	fmt.Println(commandTag)
 
 	rows, _ := conn.Query(context.Background(), "select * from userdata")
+
 	numbers, err := pgx.CollectRows(rows, pgx.RowTo[int32])
+
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(numbers)
 
 	return nil
 }

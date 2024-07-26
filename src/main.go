@@ -22,6 +22,7 @@ type postHandler struct {
 }
 
 func healthHandler() {
+	// return a ping to ourselves?
 
 }
 

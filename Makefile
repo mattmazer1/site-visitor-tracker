@@ -1,1 +1,2 @@
-compile
+clean:
+	go mod tidy -v
