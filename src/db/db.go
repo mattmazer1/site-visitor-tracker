@@ -29,17 +29,11 @@ func Connect() error {
 	}
 	defer conn.Close(context.Background())
 
-	// var test int
-	// err = conn.QueryRow(context.Background(), "select * from uservisitcount").Scan(&test)
-	// if err != nil {
-	// 	fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
-	// 	os.Exit(1)
-	// }
-
-	commandTag, err := conn.Exec(context.Background(), "WITH current_count AS (
-		SELECT count
-		FROM uservisitcount)
-		insert into uservisitcount (count) values ((SELECT count FROM current_count) + $1)", 5)
+	commandTag, err := conn.Exec(context.Background(),
+		`UPDATE uservisitcount
+     SET count = (SELECT count FROM uservisitcount LIMIT 1) + $1
+     WHERE id = 1`,
+		1)
 	if err != nil {
 		return err
 	}
@@ -48,19 +42,26 @@ func Connect() error {
 		return errors.New("no row found to delete")
 	}
 	fmt.Println(commandTag)
+	fmt.Println("GREAT SUCESSS!!!")
 
-	rows, _ := conn.Query(context.Background(), "select * from userdata")
+	var test int
+	err = conn.QueryRow(context.Background(), "SELECT count FROM uservisitcount").Scan(&test)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		os.Exit(1)
+	}
 
-	numbers, err := pgx.CollectRows(rows, pgx.RowTo[int32])
+	fmt.Println(test)
+
+	rows, _ := conn.Query(context.Background(), "SELECT * FROM userdata")
+
+	res, err := pgx.CollectRows(rows, pgx.RowTo[string])
 
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(numbers)
+	fmt.Println(res)
 
 	return nil
 }
-
-// UPDATE uservisitcount
-// SET count = count + 1
