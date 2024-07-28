@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
@@ -29,11 +30,34 @@ func Connect() error {
 	}
 	defer conn.Close(context.Background())
 
+	// do we need the "where id = 1?"
+	// commandTag, err := conn.Exec(context.Background(),
+	// 	`UPDATE uservisitcount
+	//  SET count = (SELECT count FROM uservisitcount LIMIT 1) + $1
+	//  WHERE id = 1`,
+	// 	1)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// if commandTag.RowsAffected() != 1 {
+	// 	return errors.New("no row found to delete")
+	// }
+	// fmt.Println(commandTag)
+	// fmt.Println("GREAT SUCESSS!!!")
+
+	// var test int
+	// err = conn.QueryRow(context.Background(), "SELECT count FROM uservisitcount").Scan(&test)
+	// if err != nil {
+	// 	fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+	// 	os.Exit(1)
+	// }
+
+	// fmt.Println(test)
+
 	commandTag, err := conn.Exec(context.Background(),
-		`UPDATE uservisitcount
-     SET count = (SELECT count FROM uservisitcount LIMIT 1) + $1
-     WHERE id = 1`,
-		1)
+		`INSERT INTO userdata (ip, datetime)
+		VALUES($1, $2 )`, "123.123.123", time.Now)
 	if err != nil {
 		return err
 	}
@@ -44,15 +68,6 @@ func Connect() error {
 	fmt.Println(commandTag)
 	fmt.Println("GREAT SUCESSS!!!")
 
-	var test int
-	err = conn.QueryRow(context.Background(), "SELECT count FROM uservisitcount").Scan(&test)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Println(test)
-
 	rows, _ := conn.Query(context.Background(), "SELECT * FROM userdata")
 
 	res, err := pgx.CollectRows(rows, pgx.RowTo[string])
@@ -62,6 +77,7 @@ func Connect() error {
 	}
 
 	fmt.Println(res)
+	fmt.Println("hellooooo")
 
 	return nil
 }

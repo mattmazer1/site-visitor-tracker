@@ -47,10 +47,10 @@ func (h *postHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	db.Connect()
 	http.Handle("GET /data", new(getHandler))
 	http.Handle("POST /user", new(postHandler))
 
 	log.Println("Starting server on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
-	db.Connect()
 }
