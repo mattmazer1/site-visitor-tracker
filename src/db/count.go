@@ -6,22 +6,7 @@ import (
 	"fmt"
 )
 
-func getVisitCount() error {
-	row := Conn.QueryRow(context.Background(), "SELECT count FROM uservisitcount")
-
-	var test int
-	err := row.Scan(&test)
-	if err != nil {
-		// fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
-		return errors.New("QueryRow failed")
-	}
-
-	fmt.Println(test)
-
-	return nil
-}
-
-func updateVisitCount() error {
+func UpdateVisitCount() error {
 	// do we need the "where id = 1?"
 	commandTag, err := Conn.Exec(context.Background(),
 		`UPDATE uservisitcount

@@ -7,14 +7,19 @@ import (
 	"time"
 )
 
-func getUserData() (string, error) {
+func GetUserData() (string, error) {
+	//needs to be transaction
 	query := `
     SELECT json_build_object(
-        'items', json_agg(
+        'userData', json_agg(
             json_build_object('ip', ip, 'datetime', datetime)
-        )
+        ),
+		'count', (SELECT count FROM uservisitcount LIMIT 1)
     ) AS result
-    FROM (SELECT ip, datetime FROM userdata ORDER BY id DESC) subquery;`
+    FROM (SELECT ip, datetime
+		FROM userdata
+		ORDER BY id DESC
+		) subquery;`
 
 	row := Conn.QueryRow(context.Background(), query)
 
@@ -27,10 +32,12 @@ func getUserData() (string, error) {
 	return jsonResult, nil
 }
 
-func addNewVisit() error {
+func AddNewVisit(ipAddress string) error {
+	//add transaction
 	commandTag, err := Conn.Exec(context.Background(),
 		`INSERT INTO userdata (ip, datetime)
-		VALUES($1, $2 )`, "123.123.12.3", time.Now().Format("2006-01-02 15:04:05"))
+		VALUES($1, $2 )`, ipAddress, time.Now().Format("2006-01-02 15:04:05"))
+
 	if err != nil {
 		return err
 	}
@@ -38,7 +45,11 @@ func addNewVisit() error {
 	if commandTag.RowsAffected() != 1 {
 		return errors.New("no row found to delete")
 	}
+
 	fmt.Println(commandTag)
+
+	UpdateVisitCount()
+
 	fmt.Println("GREAT SUCESSS!!!")
 
 	return nil

@@ -1,24 +1,16 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 
 	"github.com/mattmazer1/site-visitor-tracker/db"
 )
 
-type Payload struct {
-	Ip          string `json:"ip"`
-	Date        string `json:"date"`
-	Time        string `json:"time"`
-	TotalVisits int    `json:"totalVisits"`
+type userDataHandler struct {
 }
 
-type getHandler struct {
-}
-
-type postHandler struct {
+type addVisitHandler struct {
 }
 
 func healthHandler() {
@@ -26,30 +18,38 @@ func healthHandler() {
 
 }
 
-func (h *getHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *userDataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Println("Fetching data.....")
 
-	payload := Payload{
-		Ip:          "123.123.123",
-		Date:        "19/07/2023",
-		Time:        "23:08",
-		TotalVisits: 12,
+	userData, err := db.GetUserData()
+	if err != nil {
+		http.Error(w, "Failed to retrieve visit count", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-
-	json.NewEncoder(w).Encode(payload)
+	w.Write([]byte(userData))
 }
 
-func (h *postHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *addVisitHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	ipAddress := r.URL.Query()["ip"][0]
 	log.Println("Posting data.....")
 
+	err := db.AddNewVisit(ipAddress)
+	if err != nil {
+		http.Error(w, "Failed to retrieve visit count", http.StatusInternalServerError)
+		return
+	}
+	// do we have to add success reposnes to write?
 }
 
 func main() {
+	//make sure that if db can't connect we shutdown server
 	db.Connect()
-	http.Handle("GET /data", new(getHandler))
-	http.Handle("POST /user", new(postHandler))
+	defer db.CloseDb()
+	http.Handle("GET /user-data", new(userDataHandler))
+	http.Handle("POST /add-visit", new(addVisitHandler))
 
 	log.Println("Starting server on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
