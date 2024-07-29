@@ -2,15 +2,16 @@ package db
 
 import (
 	"context"
-	"errors"
+
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
 )
+
+var Conn *pgx.Conn
 
 func Connect() error {
 	err := godotenv.Load()
@@ -23,61 +24,12 @@ func Connect() error {
 		log.Fatal("PASSWORD environment variable not set")
 	}
 
-	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+	Conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
-	defer conn.Close(context.Background())
-
-	// do we need the "where id = 1?"
-	// commandTag, err := conn.Exec(context.Background(),
-	// 	`UPDATE uservisitcount
-	//  SET count = (SELECT count FROM uservisitcount LIMIT 1) + $1
-	//  WHERE id = 1`,
-	// 	1)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// if commandTag.RowsAffected() != 1 {
-	// 	return errors.New("no row found to delete")
-	// }
-	// fmt.Println(commandTag)
-	// fmt.Println("GREAT SUCESSS!!!")
-
-	// var test int
-	// err = conn.QueryRow(context.Background(), "SELECT count FROM uservisitcount").Scan(&test)
-	// if err != nil {
-	// 	fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
-	// 	os.Exit(1)
-	// }
-
-	// fmt.Println(test)
-
-	commandTag, err := conn.Exec(context.Background(),
-		`INSERT INTO userdata (ip, datetime)
-		VALUES($1, $2 )`, "123.123.123", time.Now)
-	if err != nil {
-		return err
-	}
-
-	if commandTag.RowsAffected() != 1 {
-		return errors.New("no row found to delete")
-	}
-	fmt.Println(commandTag)
-	fmt.Println("GREAT SUCESSS!!!")
-
-	rows, _ := conn.Query(context.Background(), "SELECT * FROM userdata")
-
-	res, err := pgx.CollectRows(rows, pgx.RowTo[string])
-
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(res)
-	fmt.Println("hellooooo")
+	defer Conn.Close(context.Background())
 
 	return nil
 }
