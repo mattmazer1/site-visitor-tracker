@@ -7,18 +7,12 @@ import (
 	"github.com/mattmazer1/site-visitor-tracker/db"
 )
 
-type userDataHandler struct {
-}
-
-type addVisitHandler struct {
-}
-
 func healthHandler() {
 	// return a ping to ourselves?
 
 }
 
-func (h *userDataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func userDataHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Fetching data.....")
 
 	userData, err := db.GetUserData()
@@ -31,8 +25,7 @@ func (h *userDataHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(userData))
 }
 
-func (h *addVisitHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
+func addVisitHandler(w http.ResponseWriter, r *http.Request) {
 	ipAddress := r.URL.Query()["ip"][0]
 	log.Println("Posting data.....")
 
@@ -48,8 +41,8 @@ func main() {
 	//make sure that if db can't connect we shutdown server
 	db.Connect()
 	defer db.CloseDb()
-	http.Handle("GET /user-data", new(userDataHandler))
-	http.Handle("POST /add-visit", new(addVisitHandler))
+	http.HandleFunc("GET /user-data", userDataHandler)
+	http.HandleFunc("POST /add-visit", addVisitHandler)
 
 	log.Println("Starting server on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

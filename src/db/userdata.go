@@ -33,8 +33,14 @@ func GetUserData() (string, error) {
 }
 
 func AddNewVisit(ipAddress string) error {
-	//add transaction
-	commandTag, err := Conn.Exec(context.Background(),
+	tx, err := Conn.Begin(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	defer tx.Rollback(context.Background())
+
+	commandTag, err := tx.Exec(context.Background(),
 		`INSERT INTO userdata (ip, datetime)
 		VALUES($1, $2 )`, ipAddress, time.Now().Format("2006-01-02 15:04:05"))
 
@@ -48,7 +54,15 @@ func AddNewVisit(ipAddress string) error {
 
 	fmt.Println(commandTag)
 
-	UpdateVisitCount()
+	err = UpdateVisitCount(tx)
+	if err != nil {
+		return errors.New("failed to retrieve visit count")
+	}
+
+	err = tx.Commit(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
 
 	fmt.Println("GREAT SUCESSS!!!")
 
