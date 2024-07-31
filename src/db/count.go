@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -22,8 +21,6 @@ func UpdateVisitCount(tx pgx.Tx) error {
 	if commandTag.RowsAffected() != 1 {
 		return errors.New("no row found to delete")
 	}
-	fmt.Println(commandTag)
-	fmt.Println("GREAT SUCESSS!!!")
 
 	return nil
 }

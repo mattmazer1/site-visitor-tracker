@@ -13,13 +13,23 @@ import (
 
 var Conn *pgx.Conn
 
-func Connect() {
+type Test struct {
+	Test bool
+}
+
+func Connect(t Test) {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
-	password := os.Getenv("DATABASE_URL")
+	var password string
+
+	if t.Test {
+		password = os.Getenv("TEST_DATABASE_URL")
+	} else {
+		password = os.Getenv("DATABASE_URL")
+	}
 	if password == "" {
 		log.Fatal("PASSWORD environment variable not set")
 	}
@@ -31,7 +41,6 @@ func Connect() {
 	}
 
 	fmt.Println("Connected to database")
-
 }
 
 func CloseDb() {

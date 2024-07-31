@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 )
 
 func GetUserData() (string, error) {
-	//needs to be transaction
 	query := `
     SELECT json_build_object(
         'userData', json_agg(
@@ -24,11 +24,13 @@ func GetUserData() (string, error) {
 	row := Conn.QueryRow(context.Background(), query)
 
 	var jsonResult string
+
 	err := row.Scan(&jsonResult)
 	if err != nil {
-		fmt.Println("Error scanning result:", err)
+		log.Fatal("error scanning result:", err)
 		return "", nil
 	}
+
 	return jsonResult, nil
 }
 
@@ -43,9 +45,9 @@ func AddNewVisit(ipAddress string) error {
 	commandTag, err := tx.Exec(context.Background(),
 		`INSERT INTO userdata (ip, datetime)
 		VALUES($1, $2 )`, ipAddress, time.Now().Format("2006-01-02 15:04:05"))
-
 	if err != nil {
-		return err
+		log.Fatal("could not insert data:", err)
+		return errors.New("could not insert data")
 	}
 
 	if commandTag.RowsAffected() != 1 {

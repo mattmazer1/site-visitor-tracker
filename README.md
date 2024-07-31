@@ -1,1 +1,1 @@
-A server to track visitor data.
+An API to track visitor data on my website.
