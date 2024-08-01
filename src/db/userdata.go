@@ -2,9 +2,7 @@ package db
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"log"
 	"time"
 )
 
@@ -27,8 +25,7 @@ func GetUserData() (string, error) {
 
 	err := row.Scan(&jsonResult)
 	if err != nil {
-		log.Fatal("error scanning result:", err)
-		return "", nil
+		return "", fmt.Errorf("error scanning user data %v", err)
 	}
 
 	return jsonResult, nil
@@ -37,7 +34,7 @@ func GetUserData() (string, error) {
 func AddNewVisit(ipAddress string) error {
 	tx, err := Conn.Begin(context.Background())
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
+		return fmt.Errorf("failed to initiate transaction: %v", err)
 	}
 
 	defer tx.Rollback(context.Background())
@@ -46,27 +43,22 @@ func AddNewVisit(ipAddress string) error {
 		`INSERT INTO userdata (ip, datetime)
 		VALUES($1, $2 )`, ipAddress, time.Now().Format("2006-01-02 15:04:05"))
 	if err != nil {
-		log.Fatal("could not insert data:", err)
-		return errors.New("could not insert data")
+		return fmt.Errorf("could not insert visit data %v", err)
 	}
 
 	if commandTag.RowsAffected() != 1 {
-		return errors.New("no row found to delete")
+		return fmt.Errorf("no rows were affected %v", err)
 	}
-
-	fmt.Println(commandTag)
 
 	err = UpdateVisitCount(tx)
 	if err != nil {
-		return errors.New("failed to retrieve visit count")
+		return fmt.Errorf("failed to update visit count %v", err)
 	}
 
 	err = tx.Commit(context.Background())
 	if err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
+		return fmt.Errorf("failed to commit transaction: %v", err)
 	}
-
-	fmt.Println("GREAT SUCESSS!!!")
 
 	return nil
 }

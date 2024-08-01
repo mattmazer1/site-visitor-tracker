@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"net"
 	"net/http"
 
 	"github.com/mattmazer1/site-visitor-tracker/db"
@@ -29,7 +30,6 @@ func AddUserData(w http.ResponseWriter, r *http.Request) {
 
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
-		// log.Fatal(err)
 		http.Error(w, "Failed to make GET request: %v", http.StatusInternalServerError)
 	}
 
@@ -42,12 +42,15 @@ func AddUserData(w http.ResponseWriter, r *http.Request) {
 
 	ipAddress := userData.IP
 
-	// word := query.Get("word")
-	// if len(word) == 0 {
-	//     w.WriteHeader(http.StatusBadRequest)
-	//     fmt.Fprintf(w, "missing word")
-	//     return
-	// }
+	if ipAddress == "" {
+		http.Error(w, "IP address is required", http.StatusBadRequest)
+		return
+	}
+
+	if net.ParseIP(ipAddress) == nil {
+		http.Error(w, "Invalid IP address format", http.StatusBadRequest)
+		return
+	}
 
 	err = db.AddNewVisit(ipAddress)
 	if err != nil {
@@ -58,11 +61,7 @@ func AddUserData(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	//make sure that if db can't connect we shutdown server
-	test := db.Test{
-		Test: false,
-	}
-	db.Connect(test)
+	db.Connect()
 	defer db.CloseDb()
 
 	http.HandleFunc("GET /user-data", GetUserData)

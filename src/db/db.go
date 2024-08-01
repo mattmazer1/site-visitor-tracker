@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 
-	"fmt"
 	"log"
 	"os"
 
@@ -13,34 +12,23 @@ import (
 
 var Conn *pgx.Conn
 
-type Test struct {
-	Test bool
-}
-
-func Connect(t Test) {
+func Connect() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
-	var password string
-
-	if t.Test {
-		password = os.Getenv("TEST_DATABASE_URL")
-	} else {
-		password = os.Getenv("DATABASE_URL")
-	}
+	password := os.Getenv("DATABASE_URL")
 	if password == "" {
 		log.Fatal("PASSWORD environment variable not set")
 	}
 
 	Conn, err = pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-		os.Exit(1)
+		log.Fatal("can't connect to database:", err)
 	}
 
-	fmt.Println("Connected to database")
+	log.Println("Connected to database on :5432")
 }
 
 func CloseDb() {

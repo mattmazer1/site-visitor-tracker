@@ -13,10 +13,7 @@ import (
 )
 
 func TestGetUserData(t *testing.T) {
-	test := db.Test{
-		Test: true,
-	}
-	db.Connect(test)
+	db.Connect()
 	defer db.CloseDb()
 
 	ts := httptest.NewServer(http.HandlerFunc(GetUserData))
@@ -44,6 +41,7 @@ func TestGetUserData(t *testing.T) {
 	}
 
 	var response Response
+
 	if err := json.Unmarshal(data, &response); err != nil {
 		t.Fatalf("Failed to unmarshal response body: %v", err)
 	}
@@ -69,10 +67,7 @@ func TestGetUserData(t *testing.T) {
 }
 
 func TestAddNewVisit(t *testing.T) {
-	test := db.Test{
-		Test: true,
-	}
-	db.Connect(test)
+	db.Connect()
 	defer db.CloseDb()
 
 	ts := httptest.NewServer(http.HandlerFunc(AddUserData))
