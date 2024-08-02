@@ -12,6 +12,32 @@ import (
 	"github.com/mattmazer1/site-visitor-tracker/db"
 )
 
+func TestAddNewVisit(t *testing.T) {
+	db.Connect()
+	defer db.CloseDb()
+
+	ts := httptest.NewServer(http.HandlerFunc(AddUserData))
+	defer ts.Close()
+
+	data := map[string]string{"ip": "123.123.12.3"}
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		t.Errorf("could not marshal data")
+	}
+
+	res, err := http.Post(ts.URL+"/user-data", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		t.Fatalf("Failed to make POST request: %v", err)
+	}
+
+	if res.StatusCode != 200 {
+		t.Errorf("expected status code of 200, got %v", res.StatusCode)
+	}
+
+	res.Body.Close()
+}
+
 func TestGetUserData(t *testing.T) {
 	db.Connect()
 	defer db.CloseDb()
@@ -64,31 +90,4 @@ func TestGetUserData(t *testing.T) {
 	if count != 2 {
 		t.Errorf("expected 2 got %v", count)
 	}
-}
-
-func TestAddNewVisit(t *testing.T) {
-	db.Connect()
-	defer db.CloseDb()
-
-	ts := httptest.NewServer(http.HandlerFunc(AddUserData))
-	defer ts.Close()
-
-	data := map[string]string{"ip": "123.123.12.3"}
-
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		t.Errorf("could not marshal data")
-	}
-
-	res, err := http.Post(ts.URL+"/user-data", "application/json", bytes.NewBuffer(jsonData))
-	if err != nil {
-		t.Fatalf("Failed to make POST request: %v", err)
-	}
-
-	if res.StatusCode != 200 {
-		t.Errorf("expected status code of 200, got %v", res.StatusCode)
-	}
-
-	res.Body.Close()
-
 }

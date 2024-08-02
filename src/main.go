@@ -10,6 +10,10 @@ import (
 	"github.com/mattmazer1/site-visitor-tracker/db"
 )
 
+type UserIP struct {
+	IP string `json:"ip"`
+}
+
 func GetUserData(w http.ResponseWriter, r *http.Request) {
 	userData, err := db.GetUserData()
 	if err != nil {
@@ -22,10 +26,6 @@ func GetUserData(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddUserData(w http.ResponseWriter, r *http.Request) {
-	type UserIP struct {
-		IP string `json:"ip"`
-	}
-
 	defer r.Body.Close()
 
 	data, err := io.ReadAll(r.Body)
