@@ -3,18 +3,41 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+
 	"io"
+	"log"
+	"os"
 	"testing"
+
+	"time"
 
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/mattmazer1/site-visitor-tracker/db"
+	"github.com/mattmazer1/site-visitor-tracker/src/db"
+	dbScripts "github.com/mattmazer1/site-visitor-tracker/src/db-scripts"
 )
 
-func TestAddNewVisit(t *testing.T) {
+func TestMain(m *testing.M) {
+	//probs can put db.connect here and use in the file below
+	err := dbScripts.InitDB()
+	if err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
+
 	db.Connect()
-	defer db.CloseDb()
+
+	exitVal := m.Run()
+
+	err = db.RemoveDb()
+	if err != nil {
+		log.Fatalf("Failed to drop database: %v", err)
+	}
+
+	os.Exit(exitVal)
+}
+func TestAddNewVisit(t *testing.T) {
+	log.Println("Test AddNewVisit")
 
 	ts := httptest.NewServer(http.HandlerFunc(AddUserData))
 	defer ts.Close()
@@ -39,8 +62,7 @@ func TestAddNewVisit(t *testing.T) {
 }
 
 func TestGetUserData(t *testing.T) {
-	db.Connect()
-	defer db.CloseDb()
+	log.Println("Test GetUserData")
 
 	ts := httptest.NewServer(http.HandlerFunc(GetUserData))
 	defer ts.Close()
@@ -83,8 +105,15 @@ func TestGetUserData(t *testing.T) {
 		t.Errorf("expected 123.123.12.3 got %v", userData.IP)
 	}
 
-	if userData.DateTime != "2024-07-31T16:20:27" {
-		t.Errorf("expected 2024-07-31T16:20:27 got %v", userData.DateTime)
+	parsedDbDate, err := time.Parse("2006-01-02 15:04:05", userData.DateTime)
+	if err != nil {
+		t.Errorf("Error parsing date")
+	}
+
+	dbDate := parsedDbDate.Format("2006-01-02")
+
+	if dbDate != "2024-08-03" {
+		t.Errorf("expected 2024-08-03 got %v", dbDate)
 	}
 
 	if count != 2 {

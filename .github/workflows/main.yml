@@ -1,32 +1,36 @@
-# name: Tests
-# run-name: Running test cases
-# on: [push]
+name: Tests
+run-name: Running test cases
+on: [push]
 
-# jobs:
-#   postgres-job:
-#     runs-on: ubuntu-latest
-#     container: golang:alpine
-#     services:
-#       postgres:
-#         image: postgres
-#         options: >-
-#           --health-cmd pg_isready
-#           --health-interval 10s
-#           --health-timeout 5s
-#           --health-retries 5
-#         ports:
-#           - 5432:5432
-#         volumes:
-#           - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+jobs:
+  postgres-job:
+    runs-on: ubuntu-latest
+    container: golang:alpine
+    services:
+      postgres:
+        image: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
 
-#     steps:
-#       - name: Check out repository code
-#         uses: actions/checkout@v4
-#       - name: Add depedancies
-#         run: go mod download && go mod verify
-#       - name: Go build
-#         run: go build -v -o  ./src/main.go
-#       - name: Run the mock tests function
-#         run: node getuser.js
-#         env:
-#           DBURL: postgres://postgres:postgres@localhost:5432/postgres
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Add depedancies
+        run: go mod download && go mod verify
+
+      - name: Run tests
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+          DEFAULT_URL: postgres://postgres:Blackmtz56@localhost:5432/postgres
+          DBINIT: /src/db-scripts/init.sql
+        run: go test ./src
