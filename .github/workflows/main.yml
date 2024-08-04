@@ -31,19 +31,10 @@ jobs:
       - name: Add depedancies
         run: go mod download && go mod verify
 
-      - name: Debug PostgreSQL status
-        run: |
-          echo "Checking PostgreSQL service status..."
-          pg_isready -h localhost -p 5432
-          echo "Listing network status for port 5432..."
-          netstat -an | grep 5432
-          echo "Checking running Docker containers..."
-          docker ps -a
-
       - name: Run tests
         env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
-          DEFAULT_URL: postgres://postgres:postgres@localhost:5432/postgres
+          DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
+          DEFAULT_URL: postgres://postgres:postgres@postgres:5432/postgres
           DBINIT: /src/db-scripts/init.sql
         run: go test ./src
       - name: Test
