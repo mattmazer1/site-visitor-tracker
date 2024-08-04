@@ -31,6 +31,9 @@ jobs:
       - name: Add depedancies
         run: go mod download && go mod verify
 
+      - name: Check path
+        run: pwd
+
       - name: Run tests
         env:
           DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
