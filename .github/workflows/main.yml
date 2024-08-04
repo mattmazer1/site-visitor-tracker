@@ -25,17 +25,28 @@ jobs:
           POSTGRES_DB: postgres
 
     steps:
-      # - name: Check out repository code
-      #   uses: actions/checkout@v4
+      - name: Check out repository code
+        uses: actions/checkout@v4
 
-      # - name: Add depedancies
-      #   run: go mod download && go mod verify
+      - name: Add depedancies
+        run: go mod download && go mod verify
 
-      # - name: Run tests
-      #   env:
-      #     DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
-      #     DEFAULT_URL: postgres://postgres:postgres@localhost:5432/postgres
-      #     DBINIT: /src/db-scripts/init.sql
-      #   run: go test ./src
-        - name: Test
-          run: echo "Testing"
+      # - name: Wait for PostgreSQL to be ready
+      #   run: |
+      #     for i in {1..10}; do
+      #       if pg_isready -h localhost -p 5432; then
+      #         echo "PostgreSQL is ready"
+      #         break
+      #       fi
+      #       echo "Waiting for PostgreSQL to be ready..."
+      #       sleep 3
+      #     done
+
+      - name: Run tests
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+          DEFAULT_URL: postgres://postgres:postgres@localhost:5432/postgres
+          DBINIT: /src/db-scripts/init.sql
+        run: go test ./src
+      - name: Test
+        run: echo "Testing"
