@@ -1,9 +1,6 @@
 name: Tests
-run-name: Running test cases
-# on: [push]
-on:
-  push:
-  workflow_dispatch:
+run-name: Run tests
+on: [push]
 
 jobs:
   Run-tests:
@@ -28,11 +25,8 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v4
 
-      - name: Add depedancies
+      - name: Add dependencies
         run: go mod download && go mod verify
-
-      - name: Check path
-        run: pwd
 
       - name: Run tests
         env:
@@ -40,5 +34,3 @@ jobs:
           DEFAULT_URL: postgres://postgres:postgres@postgres:5432/postgres
           DBINIT: /__w/site-visitor-tracker/site-visitor-tracker/src/db-scripts/init.sql
         run: go test ./src
-      - name: Test
-        run: echo "Testing"

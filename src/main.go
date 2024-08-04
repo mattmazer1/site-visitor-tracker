@@ -57,6 +57,7 @@ func AddUserData(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to retrieve visit count", http.StatusInternalServerError)
 		return
 	}
+
 	w.WriteHeader(http.StatusOK)
 }
 

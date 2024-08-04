@@ -37,7 +37,7 @@ func RemoveDb() error {
 	connectToDefaultDb()
 	defer closeDefaultDb()
 
-	_, err := conn.Exec(context.Background(), "DROP DATABASE IF EXISTS personal_site_user_dataa;")
+	_, err := conn.Exec(context.Background(), "DROP DATABASE IF EXISTS personal_site_user_data;")
 	if err != nil {
 		return err
 	}

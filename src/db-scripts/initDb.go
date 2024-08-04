@@ -37,7 +37,7 @@ func closeDefaultDb() {
 func InitDB() error {
 	connectToDefaultDb()
 
-	_, err := conn.Exec(context.Background(), "CREATE DATABASE personal_site_user_dataa;")
+	_, err := conn.Exec(context.Background(), "CREATE DATABASE personal_site_user_data;")
 	if err != nil {
 		return fmt.Errorf("failed to create database: %v", err)
 	}
