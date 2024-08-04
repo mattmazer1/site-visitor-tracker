@@ -112,7 +112,7 @@ func TestGetUserData(t *testing.T) {
 
 	dbDate := parsedDbDate.Format("2006-01-02")
 
-	if dbDate != "2024-08-03" {
+	if dbDate != time.Now().Format("2006-01-02") {
 		t.Errorf("expected 2024-08-03 got %v", dbDate)
 	}
 

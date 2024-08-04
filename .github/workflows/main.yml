@@ -3,7 +3,7 @@ run-name: Running test cases
 on: [push]
 
 jobs:
-  postgres-job:
+  Run-tests:
     runs-on: ubuntu-latest
     container: golang:alpine
     services:

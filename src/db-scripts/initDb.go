@@ -9,24 +9,20 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"github.com/joho/godotenv"
 	"github.com/mattmazer1/site-visitor-tracker/src/db"
 )
 
 var conn *pgx.Conn
 
 func connectToDefaultDb() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 
 	password := os.Getenv("DEFAULT_URL")
 	if password == "" {
 		log.Fatal("PASSWORD environment variable not set")
 	}
 
-	conn, err = pgx.Connect(context.Background(), os.Getenv("DEFAULT_URL"))
+	var err error
+	conn, err = pgx.Connect(context.Background(), password)
 	if err != nil {
 		log.Fatal("can't connect to database:", err)
 	}
@@ -51,17 +47,12 @@ func InitDB() error {
 	db.Connect()
 	defer db.CloseDb()
 
-	err = godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
 	url := os.Getenv("DBINIT")
 	if url == "" {
 		log.Fatal("PASSWORD environment variable not set")
 	}
 
-	sqlFile := os.Getenv("DBINIT")
+	sqlFile := url
 	file, err := os.Open(sqlFile)
 	if err != nil {
 		return err

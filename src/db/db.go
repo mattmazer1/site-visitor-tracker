@@ -7,24 +7,19 @@ import (
 	"os"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/joho/godotenv"
 )
 
 var Conn *pgx.Conn
 var conn *pgx.Conn
 
 func Connect() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
 	password := os.Getenv("DATABASE_URL")
 	if password == "" {
 		log.Fatal("PASSWORD environment variable not set")
 	}
 
-	Conn, err = pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+	var err error
+	Conn, err = pgx.Connect(context.Background(), password)
 	if err != nil {
 		log.Fatal("can't connect to database:", err)
 	}
@@ -50,17 +45,14 @@ func RemoveDb() error {
 }
 
 func connectToDefaultDb() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 
 	password := os.Getenv("DEFAULT_URL")
 	if password == "" {
 		log.Fatal("PASSWORD environment variable not set")
 	}
 
-	conn, err = pgx.Connect(context.Background(), os.Getenv("DEFAULT_URL"))
+	var err error
+	conn, err = pgx.Connect(context.Background(), password)
 	if err != nil {
 		log.Fatal("can't connect to database:", err)
 	}
