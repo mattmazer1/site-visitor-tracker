@@ -17,7 +17,7 @@ type UserIP struct {
 func GetUserData(w http.ResponseWriter, r *http.Request) {
 	userData, err := db.GetUserData()
 	if err != nil {
-		http.Error(w, "Failed to retrieve visit count", http.StatusInternalServerError)
+		http.Error(w, "Failed to retrieve user data", http.StatusInternalServerError)
 		return
 	}
 

@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-
 	"log"
 	"os"
 
@@ -10,7 +9,6 @@ import (
 )
 
 var Conn *pgx.Conn
-var conn *pgx.Conn
 
 func Connect() {
 	password := os.Getenv("DATABASE_URL")
@@ -34,32 +32,12 @@ func CloseDb() {
 func RemoveDb() error {
 	CloseDb()
 
-	connectToDefaultDb()
-	defer closeDefaultDb()
+	ConnectToDefaultDb()
+	defer CloseDefaultDb()
 
-	_, err := conn.Exec(context.Background(), "DROP DATABASE IF EXISTS personal_site_user_data;")
+	_, err := DefaultConn.Exec(context.Background(), "DROP DATABASE IF EXISTS personal_site_user_data;")
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-func connectToDefaultDb() {
-
-	password := os.Getenv("DEFAULT_URL")
-	if password == "" {
-		log.Fatal("PASSWORD environment variable not set")
-	}
-
-	var err error
-	conn, err = pgx.Connect(context.Background(), password)
-	if err != nil {
-		log.Fatal("can't connect to database:", err)
-	}
-
-	log.Println("Connected to default database on :5432")
-}
-
-func closeDefaultDb() {
-	conn.Close(context.Background())
 }

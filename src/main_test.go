@@ -19,7 +19,6 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	//probs can put db.connect here and use in the file below
 	err := dbScripts.InitDB()
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
@@ -111,9 +110,10 @@ func TestGetUserData(t *testing.T) {
 	}
 
 	dbDate := parsedDbDate.Format("2006-01-02")
+	currentDate := time.Now().Format("2006-01-02")
 
-	if dbDate != time.Now().Format("2006-01-02") {
-		t.Errorf("expected 2024-08-03 got %v", dbDate)
+	if dbDate != currentDate {
+		t.Errorf("expected %v got %v", currentDate, dbDate)
 	}
 
 	if count != 2 {
