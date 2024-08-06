@@ -1,19 +1,29 @@
-FROM golang:15-alpine
+FROM golang:15-alpine AS builder
 
 WORKDIR /api
 
-RUN echo "Hello world"
+COPY go.mod go.sum ./
 
 RUN go mod download && go mod verify
 
-ENV DATABASE_URL: DB_URL
+COPY . .
+
+ENV DATABASE_URL: DATABASE_URL
 ENV DEFAULT_URL: DEFAULT_URL
 ENV DBINIT: DBINIT
 
-RUN go build /src/main.go /bin
+RUN go build -v -o ./bin/server ./src/main.go
 
-COPY ./bin ./
+FROM alpine:latest AS final
 
-EXPOSE 5432
+WORKDIR /server
 
-CMD [ "go run" ]
+COPY --from=builder /api/bin/ /server/
+
+EXPOSE 8080
+
+RUN useradd runner
+
+USER runner
+
+ENTRYPOINT [ "server" ]

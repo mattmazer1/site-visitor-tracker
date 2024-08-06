@@ -2,10 +2,7 @@ module github.com/mattmazer1/site-visitor-tracker
 
 go 1.22.5
 
-require (
-	github.com/jackc/pgx/v5 v5.6.0
-	github.com/joho/godotenv v1.5.1
-)
+require github.com/jackc/pgx/v5 v5.6.0
 
 require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect

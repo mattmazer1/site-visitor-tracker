@@ -1,0 +1,20 @@
+# name: Deployment
+# run-name: Deploying application
+# on:
+#   push:
+#     branches:
+#       - "main"
+
+# jobs:
+#   Build-image:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout code
+#         uses: checkout@v4
+
+#       - name: Build docker file
+#         run: docker-compose up
+
+#       - name: Push image to dockerhub
+#         run: push image
