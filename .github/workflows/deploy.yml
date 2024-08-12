@@ -19,5 +19,14 @@
 #       - name: Push image to dockerhub
 #         run: push image
 
+#       - name: Terraform initialise
+#         run: terraform init
+
+#       - name: Terraform validate
+#         run: terraform validate
+
+#       - name: Terraform format
+#         run: terraform fmt
+
 #       - name: Terraform apply
 #         run: terraform apply
