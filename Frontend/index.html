@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .card{
+          max-width: 215px;
+          background-color: #f0f0f0;
+          border: 2px solid #000000;
+          padding: 10px;
+          margin: 10px 0;
+          border-radius: 10px;
+        }
+    </style>
+    <h1>
+    Site visit data
+    </h1>
+</head>
+
+<body>
+<h2 id="visit-count"> Visit count: </h2>
+<div id="card-container" class="container"></div>
+</body>
+
+<script>
+
+function fetchData(){
+    const container = document.getElementById('card-container');
+
+    fetch("http://localhost:8080/user-data") //TODO use env instead
+        .then(response => response.json())
+        .then(data => {
+            const userData = data.userData;
+            const count = data.count;
+            document.getElementById("visit-count").innerHTML = "Visit count: " + count;
+
+            userData.forEach(data => {
+                const card = document.createElement('div');
+                card.className = "card"
+                card.innerHTML = `
+                    <p> <b>IP:</b> ${data.ip}</p>
+                    <p> <b>Date/time:</b> ${data.datetime}</p>
+                `;
+
+                container.appendChild(card);
+            });
+        })
+        .catch(error => {
+            alert("Oh no something went wrong!", error);
+            document.getElementById("visit-count").innerHTML = "Visit count: Error";
+            container.innerHTML = "User data: Error"
+        });
+}
+
+fetchData();
+</script>
+</html>
