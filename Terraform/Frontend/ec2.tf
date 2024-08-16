@@ -27,3 +27,9 @@ resource "aws_instance" "website_server" {
     Name = "WebsiteSever"
   }
 }
+
+output "test_ami" {
+  value       = data.aws_ami.latest_ami
+  description = "get ami output"
+}
+

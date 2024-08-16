@@ -9,16 +9,18 @@ terraform {
     }
   }
 
-  cloud {
-    organization = "Matts-personal-projects"
+  #init with state file and upload then delete state
+  #   cloud {
+  #     organization = "Matts-personal-projects"
 
-    workspaces {
-      name = ""
-    }
-  }
+  #     workspaces {
+  #       name = ""
+  #     }
+  #   }
 }
 
 provider "aws" {
   region = "ap-southeast-2"
 }
 
+# TODO need to add roles, groups and networking
