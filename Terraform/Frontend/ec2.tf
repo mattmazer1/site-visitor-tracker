@@ -1,3 +1,6 @@
+module "roles" {
+  source = "../Roles"
+}
 data "aws_ami" "latest_ami" {
   most_recent = true
   owners      = ["136693071363"]
@@ -18,18 +21,11 @@ data "aws_ami" "latest_ami" {
   }
 }
 resource "aws_instance" "website_server" {
-  ami           = data.aws_ami.latest_ami.id
-  instance_type = "t2.micro"
-
-  #add iam role 
+  ami                  = data.aws_ami.latest_ami.id
+  instance_type        = "t2.micro"
+  iam_instance_profile = module.roles.aws_iam_instance_profile_name
 
   tags = {
     Name = "WebsiteSever"
   }
 }
-
-output "test_ami" {
-  value       = data.aws_ami.latest_ami
-  description = "get ami output"
-}
-

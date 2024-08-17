@@ -23,4 +23,8 @@ provider "aws" {
   region = "ap-southeast-2"
 }
 
+module "frontend" {
+  source = "./Frontend"
+}
+
 # TODO need to add roles, groups and networking
