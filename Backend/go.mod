@@ -1,4 +1,4 @@
-module github.com/mattmazer1/site-visitor-tracker
+module github.com/mattmazer1/site-visitor-tracker/Backend
 
 go 1.22.5
 

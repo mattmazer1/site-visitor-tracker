@@ -1,2 +1,4 @@
 .env
 .vscode
+db_url.txt
+.bin

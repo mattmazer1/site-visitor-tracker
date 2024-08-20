@@ -14,8 +14,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	"github.com/mattmazer1/site-visitor-tracker/src/db"
-	dbScripts "github.com/mattmazer1/site-visitor-tracker/src/db-scripts"
+	"github.com/mattmazer1/site-visitor-tracker/Backend/src/db"
+	dbScripts "github.com/mattmazer1/site-visitor-tracker/Backend/src/db-scripts"
 )
 
 func TestMain(m *testing.M) {

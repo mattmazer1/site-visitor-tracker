@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/mattmazer1/site-visitor-tracker/src/db"
+	"github.com/mattmazer1/site-visitor-tracker/Backend/src/db"
 )
 
 func InitDB() error {
