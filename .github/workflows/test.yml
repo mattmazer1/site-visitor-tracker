@@ -32,5 +32,5 @@ jobs:
         env:
           DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
           DEFAULT_URL: postgres://postgres:postgres@postgres:5432/postgres
-          DBINIT: /__w/site-visitor-tracker/site-visitor-tracker/src/db-scripts/init.sql
+          DBINIT: /__w/site-visitor-tracker/site-visitor-tracker/Backend/src/db-scripts/init.sql
         run: cd Backend && go test ./src
