@@ -25,15 +25,12 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v4
 
-      - name: Change to backend directory
-        run: cd Backend
-
       - name: Add dependencies
-        run: go mod download && go mod verify
+        run: cd Backend && go mod download && go mod verify
 
       - name: Run tests
         env:
           DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
           DEFAULT_URL: postgres://postgres:postgres@postgres:5432/postgres
           DBINIT: /__w/site-visitor-tracker/site-visitor-tracker/src/db-scripts/init.sql
-        run: go test ./src
+        run: cd Backend && go test ./src
