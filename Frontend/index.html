@@ -26,7 +26,7 @@
 function fetchData(){
     const container = document.getElementById('card-container');
 
-    fetch("http://localhost:8080/user-data") //TODO use env instead
+    fetch(process.env.API_URL)
         .then(response => response.json())
         .then(data => {
             const userData = data.userData;

@@ -26,5 +26,3 @@ provider "aws" {
 module "frontend" {
   source = "./Frontend"
 }
-
-# TODO need to add roles, groups and networking

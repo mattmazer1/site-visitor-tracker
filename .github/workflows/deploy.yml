@@ -13,12 +13,16 @@
 #       - name: Checkout code
 #         uses: checkout@v4
 
-#       - name: Build docker file
-#         run: docker-compose up
+#       - name: Build docker image
+#         run: docker build -t psite-server .
 
 #       - name: Push image to dockerhub
-#         run: push image
+#         run: docker push image
 
+#   Build-infra:
+#     runs-on: ubuntu-lates
+
+#     steps:
 #       - name: Terraform initialise
 #         run: terraform init
 

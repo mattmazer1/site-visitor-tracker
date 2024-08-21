@@ -20,6 +20,8 @@ data "aws_ami" "latest_ami" {
     values = ["hvm"]
   }
 }
+
+#need to link security group here
 resource "aws_instance" "website_server" {
   ami                  = data.aws_ami.latest_ami.id
   instance_type        = "t2.micro"
@@ -28,4 +30,8 @@ resource "aws_instance" "website_server" {
   tags = {
     Name = "WebsiteSever"
   }
+}
+resource "aws_eip" "nat_eip" {
+  domain   = "vpc"
+  instance = aws_instance.website_server.id
 }
