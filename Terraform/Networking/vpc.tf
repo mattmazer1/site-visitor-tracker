@@ -84,7 +84,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_https" {
 
 resource "aws_vpc_security_group_ingress_rule" "allow_ssh" {
   security_group_id = aws_security_group.frontend.id
-  cidr_ipv4         = "iphere"
+  cidr_ipv4         = local.IP_ADDRESS
   from_port         = 22
   ip_protocol       = "tcp"
   to_port           = 22
@@ -150,8 +150,13 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_outbound" {
   to_port           = 0
 }
 
+data "hcp_vault_secrets_app" "psite" {
+  app_name = "psite-secrets"
+}
+
 locals {
   public_subnet_cidrs  = ["10.0.1.0/28"]
   private_subnet_cidrs = ["10.0.2.0/28"]
+  IP_ADDRESS           = data.hcp_vault_secrets_app.psite.secrets["IP_ADDRESS"]
 }
 
