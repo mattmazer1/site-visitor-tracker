@@ -40,6 +40,11 @@ resource "aws_route_table" "public_route_table" {
   }
 }
 
+resource "aws_route_table_association" "public_subnet_association" {
+  subnet_id      = aws_subnet.public_subnets[*].id
+  route_table_id = aws_route_table.public_route_table.id
+}
+
 resource "aws_route_table" "private_route_table" {
   vpc_id = aws_vpc.psite.id
   count  = length(local.public_subnet_cidrs)
@@ -51,25 +56,102 @@ resource "aws_route_table" "private_route_table" {
   }
 }
 
-resource "aws_route_table_association" "public_subnet_association" {
-  subnet_id      = aws_subnet.public_subnets[*].id
-  route_table_id = aws_route_table.public_route_table.id
-}
-
 resource "aws_route_table_association" "private_subnet_association" {
   subnet_id      = aws_subnet.private_subnets[*].id
   route_table_id = aws_route_table.private_route_table.id
 }
+
+resource "aws_security_group" "frontend" {
+  name        = "frontend-security-group"
+  description = "Allow HTTP, HTTPS and SSH traffic"
+  vpc_id      = aws_vpc.psite.id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_http" {
+  security_group_id = aws_security_group.frontend.id
+  cidr_ipv4         = ["0.0.0.0/0"]
+  from_port         = 80
+  ip_protocol       = "tcp"
+  to_port           = 80
+}
+resource "aws_vpc_security_group_ingress_rule" "allow_https" {
+  security_group_id = aws_security_group.frontend.id
+  cidr_ipv4         = ["0.0.0.0/0"]
+  from_port         = 443
+  ip_protocol       = "tcp"
+  to_port           = 443
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_ssh" {
+  security_group_id = aws_security_group.frontend.id
+  cidr_ipv4         = "iphere"
+  from_port         = 22
+  ip_protocol       = "tcp"
+  to_port           = 22
+}
+
+resource "aws_vpc_security_group_egress_rule" "allow_https" {
+  security_group_id = aws_security_group.frontend.id
+  cidr_ipv4         = ["0.0.0.0/0"]
+  from_port         = 0
+  ip_protocol       = "-1"
+  to_port           = 0
+}
+
+resource "aws_security_group" "server" {
+  name        = "server-security-group"
+  description = "Allow HTTPS and database traffic"
+  vpc_id      = aws_vpc.psite.id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_https" {
+  security_group_id = aws_security_group.server.id
+  cidr_ipv4         = ["0.0.0.0/0"]
+  from_port         = 443
+  ip_protocol       = "tcp"
+  to_port           = 443
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_db" {
+  security_group_id = aws_security_group.server.id
+  cidr_ipv4         = aws_subnet.private_subnets.id
+  from_port         = 5432
+  ip_protocol       = "tcp"
+  to_port           = 5432
+}
+
+resource "aws_vpc_security_group_egress_rule" "allow_all_outbound" {
+  security_group_id = aws_security_group.server.id
+  cidr_ipv4         = ["0.0.0.0/0"]
+  from_port         = 0
+  ip_protocol       = "-1"
+  to_port           = 0
+}
+
+resource "aws_security_group" "database" {
+  name        = "database-security-group"
+  description = "Allow HTTPS traffic"
+  vpc_id      = aws_vpc.psite.id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allow_db_access" {
+  security_group_id = aws_security_group.database.id
+  cidr_ipv4         = aws_subnet.private_subnets.id
+  from_port         = 5432
+  ip_protocol       = "tcp"
+  to_port           = 5432
+}
+
+resource "aws_vpc_security_group_egress_rule" "allow_all_outbound" {
+  security_group_id = aws_security_group.database.id
+  cidr_ipv4         = ["0.0.0.0/0"]
+  from_port         = 0
+  ip_protocol       = "-1"
+  to_port           = 0
+}
+
 locals {
   public_subnet_cidrs  = ["10.0.1.0/28"]
   private_subnet_cidrs = ["10.0.2.0/28"]
 }
 
-# TODO
-#NAT gateway
-#FIREWALL
-#Subnets
-#IP addresses
-#DNS
-#Assing each resoruce to sbunets and ips
-#Secure credentials 
