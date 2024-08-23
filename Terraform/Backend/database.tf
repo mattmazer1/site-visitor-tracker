@@ -6,6 +6,8 @@ resource "aws_db_instance" "site_data_store" {
   engine_version        = "16.3"
   storage_type          = "gp2"
   instance_class        = "db.t3.micro"
+  db_subnet_group_name = 
+  vpc_security_group_ids = 
   username              = "postgres"
   password              = local.DB_PASSWORD
   parameter_group_name  = "default.postgres16"
