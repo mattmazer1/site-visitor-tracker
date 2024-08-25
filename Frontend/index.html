@@ -25,8 +25,9 @@
 
 function fetchData(){
     const container = document.getElementById('card-container');
+    API_URL = "https"
 
-    fetch(process.env.API_URL)
+    fetch(API_URL)
         .then(response => response.json())
         .then(data => {
             const userData = data.userData;
