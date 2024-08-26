@@ -2,7 +2,6 @@ terraform {
   required_version = ">= 1.2.0"
 
   required_providers {
-
     aws = {
       source  = "hashicorp/aws"
       version = "~> 4.16"
@@ -13,14 +12,13 @@ terraform {
     }
   }
 
-  #init with state file and upload then delete state
-  #   cloud {
-  #     organization = "Matts-personal-projects"
+  cloud {
+    organization = "Matts-personal-projects"
 
-  #     workspaces {
-  #       name = ""
-  #     }
-  #   }
+    workspaces {
+      name = "testing-two"
+    }
+  }
 }
 
 provider "aws" {
@@ -32,15 +30,10 @@ provider "hcp" {
   client_secret = var.HCP_CLIENT_SECRET
 }
 
-
 variable "HCP_CLIENT_ID" {
   type = string
 }
 
 variable "HCP_CLIENT_SECRET" {
   type = string
-}
-
-module "frontend" {
-  source = "./Frontend"
 }

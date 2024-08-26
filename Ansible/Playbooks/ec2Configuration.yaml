@@ -1,0 +1,4 @@
+- name:
+  hosts: myHosts
+  tasks:
+    - name: Download nginx
