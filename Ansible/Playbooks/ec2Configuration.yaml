@@ -1,4 +1,11 @@
-- name:
-  hosts: myHosts
+- name: My first play
+  hosts: myhosts
+  become: true
   tasks:
-    - name: Download nginx
+    - name: Get info from frontend server
+      #   amazon.aws.ec2_instance_info:
+      #debug
+      #fact?
+      # access_key:
+      # filters:
+      # "tag:Name": WebsiteServer
