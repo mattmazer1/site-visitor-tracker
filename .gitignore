@@ -2,3 +2,4 @@
 .vscode
 db_url.txt
 .bin
+.terraform

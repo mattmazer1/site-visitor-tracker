@@ -41,7 +41,7 @@ resource "aws_route_table" "public_route_table" {
   vpc_id = aws_vpc.psite.id
 
   route {
-    cidr_block = "0.0.0.0/0" #TODO shouldn't this be public subent cidr? ---------------------------------------------
+    cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.internet_gateway.id
   }
 }
@@ -55,7 +55,7 @@ resource "aws_route_table" "private_route_table" {
   vpc_id = aws_vpc.psite.id
 
   route {
-    cidr_block = local.private_subnet_cidrs
+    cidr_block = "0.0.0.0/0"
     gateway_id = aws_nat_gateway.nat_gateway.id
   }
 }
@@ -85,14 +85,6 @@ resource "aws_vpc_security_group_ingress_rule" "allow_frontend_https" {
   from_port         = 443
   ip_protocol       = "tcp"
   to_port           = 443
-}
-
-resource "aws_vpc_security_group_ingress_rule" "allow_frontend_ssh" {
-  security_group_id = aws_security_group.frontend.id
-  cidr_ipv4         = "${local.IP_ADDRESS}/32"
-  from_port         = 22
-  ip_protocol       = "tcp"
-  to_port           = 22
 }
 
 resource "aws_vpc_security_group_egress_rule" "allow_all_frontend_outbound" {
@@ -125,14 +117,6 @@ resource "aws_vpc_security_group_ingress_rule" "allow_server_to_db" {
   from_port         = 5432
   ip_protocol       = "tcp"
   to_port           = 5432
-}
-
-resource "aws_vpc_security_group_ingress_rule" "allow_server_ssh" {
-  security_group_id = aws_security_group.server.id
-  cidr_ipv4         = "${local.IP_ADDRESS}/32"
-  from_port         = 22
-  ip_protocol       = "tcp"
-  to_port           = 22
 }
 
 resource "aws_vpc_security_group_egress_rule" "allow_all_server_outbound" {
@@ -195,14 +179,9 @@ output "database_security_group" {
   value       = aws_security_group.database
 }
 
-data "hcp_vault_secrets_app" "psite" {
-  app_name = "psite-secrets"
-}
-
 locals {
   public_subnet_cidrs            = "10.0.0.0/28"
   private_subnet_cidrs           = "10.0.0.16/28"
   private_db_backup_subnet_cidrs = "10.0.0.32/28"
-  IP_ADDRESS                     = data.hcp_vault_secrets_app.psite.secrets["IP_ADDRESS"]
 }
 

@@ -1,10 +1,10 @@
 data "aws_ami" "latest_ami" {
   most_recent = true
-  owners      = ["136693071363"]
+  owners      = ["099720109477"]
 
   filter {
     name   = "name"
-    values = ["debian-12-amd64-*"]
+    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
   }
 
   filter {
