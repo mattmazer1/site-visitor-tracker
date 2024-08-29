@@ -26,7 +26,7 @@ resource "aws_instance" "website_server" {
   subnet_id              = var.public_subnet_id
 
   tags = {
-    Name = "ApiServer"
+    Name = "WebsiteServer"
   }
 }
 

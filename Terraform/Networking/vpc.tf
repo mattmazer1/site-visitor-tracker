@@ -68,7 +68,7 @@ resource "aws_route_table_association" "private_subnet_association" {
 
 resource "aws_security_group" "frontend" {
   name        = "frontend-security-group"
-  description = "Allow HTTP, HTTPS and SSH traffic"
+  description = "Allow HTTP, HTTPS and SSH traffic" #fix description
   vpc_id      = aws_vpc.psite.id
 }
 
@@ -99,7 +99,7 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_frontend_outbound" {
 
 resource "aws_security_group" "server" {
   name        = "server-security-group"
-  description = "Allow HTTPS, database and SSH traffic"
+  description = "Allow HTTPS, database and SSH traffic" # fix description
   vpc_id      = aws_vpc.psite.id
 }
 
@@ -111,9 +111,17 @@ resource "aws_vpc_security_group_ingress_rule" "allow_server_https" {
   to_port           = 443
 }
 
+resource "aws_vpc_security_group_ingress_rule" "allow_frontend_to_backend" {
+  security_group_id = aws_security_group.server.id
+  cidr_ipv4         = aws_subnet.private_subnet.cidr_block #TODO not too sure here
+  from_port         = 8080
+  ip_protocol       = "tcp"
+  to_port           = 8080
+}
+
 resource "aws_vpc_security_group_ingress_rule" "allow_server_to_db" {
   security_group_id = aws_security_group.server.id
-  cidr_ipv4         = aws_subnet.private_subnet.cidr_block
+  cidr_ipv4         = aws_subnet.public_subnet.cidr_block
   from_port         = 5432
   ip_protocol       = "tcp"
   to_port           = 5432
@@ -184,4 +192,3 @@ locals {
   private_subnet_cidrs           = "10.0.0.16/28"
   private_db_backup_subnet_cidrs = "10.0.0.32/28"
 }
-
