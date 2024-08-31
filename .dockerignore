@@ -1,5 +1,9 @@
 .git
+.github
 .gitignore
 .env
 .README.md
 .vscode
+Terraform
+Ansible
+Frontend

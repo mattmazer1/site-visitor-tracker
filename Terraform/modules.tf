@@ -23,4 +23,3 @@ module "backend" {
   database_security_group_id  = module.networking.database_security_group.id
   instance_profile_name       = module.roles.aws_iam_instance_profile_name
 }
-
