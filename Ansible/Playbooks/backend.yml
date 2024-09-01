@@ -1,0 +1,121 @@
+- name: Backend play
+  hosts: webservers
+  become: true
+  vars:
+    db_name: personal_site_user_data
+    db_user: postgres
+    db_password: xxxx
+    db_host: 192.168.64.1
+    db_port: 5432
+    sql_script_path: /tmp/script.sql
+  tasks:
+    - name: Update apt
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+        state: present
+        update_cache: true
+
+    - name: Create directory for apt keyrings
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Download Docker GPG key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+
+    - name: Add Docker repository to apt sources
+      ansible.builtin.shell: |
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    # TODO need to use shell here. (module needed)
+
+    - name: Update apt
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install Docker engine and related packages
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: Pull docker image
+      community.docker.docker_image_pull:
+        name: mattmazer1/psite-server
+        platform: amd64
+
+    - name: Run container
+      community.docker.docker_container:
+        name: psite-server
+        image: mattmazer1/psite-server
+        detach: true
+        env:
+          DATABASE_URL: "postgres://postgres:xxxx@192.168.64.1:5432/personal_site_user_data"
+        ports:
+          - "8080-8080"
+
+    - name: Copy SQL script to remote host
+      ansible.builtin.copy:
+        src: /Users/mattmazer/Documents/Projects/site-visitor-tracker/Ansible/script.sql
+        dest: /tmp/script.sql
+        mode: "0644"
+
+    - name: Install Python 3 and venv
+      ansible.builtin.package:
+        name:
+          - python3
+          - python3-venv
+          - python3-pip
+
+    - name: Create a virtual environment
+      ansible.builtin.command:
+        cmd: python3 -m venv /opt/myenv
+        creates: /opt/myenv
+
+    - name: Install psycopg2-binary in the virtual environment
+      ansible.builtin.pip:
+        name: psycopg2-binary
+        virtualenv: /opt/myenv
+
+    - name: Check if initialisation is needed
+      community.postgresql.postgresql_query:
+        db: "{{ db_name }}"
+        login_host: "{{ db_host }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+        port: "{{ db_port }}"
+        query: "SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.tables
+          WHERE table_schema = 'public'
+          AND table_name = 'userdata');"
+      environment:
+        PYTHONPATH: /opt/myenv/lib/python3.12/site-packages
+      register: query_result
+
+    - name: Initialise database
+      community.postgresql.postgresql_script:
+        db: "{{ db_name }}"
+        path: "{{ sql_script_path }}"
+        login_host: "{{ db_host }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+        port: "{{ db_port }}"
+      environment:
+        PYTHONPATH: /opt/myenv/lib/python3.12/site-packages
+      when: query_result.query_result[0].exists == false
+# TODO need to seperate backend from database by using seperate plays
