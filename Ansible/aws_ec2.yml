@@ -1,0 +1,8 @@
+plugin: amazon.aws.aws_ec2
+regions:
+  - ap-southeast-2
+hostnames:
+  - instance-id
+filters:
+  tag:Name: [WebsiteServer, ApiServer]
+
