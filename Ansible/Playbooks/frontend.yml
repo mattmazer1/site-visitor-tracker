@@ -1,0 +1,180 @@
+- name: Frontend play
+  hosts: _WebsiteServer
+  become: true
+  vars:
+    ansible_connection: aws_ssm
+    ansible_aws_ssm_bucket_name: ansible-bucket-psite
+    ansible_aws_ssm_region: ap-southeast-2
+  vars_files:
+    - secrets.yml
+  tasks:
+    - name: Install packages
+      ansible.builtin.apt:
+        name:
+          - nginx
+          - python3-venv
+          - python3-pip
+          - libaugeas0
+        update_cache: true
+
+    - name: Create a virtual environment
+      ansible.builtin.command:
+        cmd: python3 -m venv /opt/myenv
+        creates: /opt/myenv
+
+    - name: Install botocore and boto3 in the virtual env
+      ansible.builtin.pip:
+        name:
+          - boto3
+          - botocore
+        virtualenv: /opt/myenv
+
+    - name: Get public frontend server info
+      amazon.aws.ec2_instance_info:
+        region: ap-southeast-2
+        filters:
+          "tag:Name": WebsiteServer
+      environment:
+        PYTHONPATH: /opt/myenv/lib/python3.12/site-packages
+      register: frontend_public_ip
+
+    - name: Set public IP fact
+      ansible.builtin.set_fact:
+        frontend_public_ip_address: "{{ frontend_public_ip.instances[0].public_ip_address }}"
+
+    - name: Get internal backend server info
+      amazon.aws.ec2_instance_info:
+        region: ap-southeast-2
+        filters:
+          "tag:Name": ApiServer
+      environment:
+        PYTHONPATH: /opt/myenv/lib/python3.12/site-packages
+      register: backend_private_ip
+
+    - name: Set private IP fact
+      ansible.builtin.set_fact:
+        backend_private_ip_address: "{{ backend_private_ip.instances[0].private_ip_address }}"
+
+    - name: Fetch index.html from GitHub
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/mattmazer1/site-visitor-tracker/contents/Frontend/index.html
+        headers:
+          Authorization: "{{ github_auth_token }}"
+          Accept: "application/vnd.github.v3.raw"
+        return_content: true
+      register: html_file
+
+    - name: Update index html file
+      ansible.builtin.copy:
+        content: "{{ html_file.content }}"
+        dest: /var/www/html/index.nginx-debian.html
+        mode: "0777"
+
+    - name: Fetch nginx file from GitHub
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/mattmazer1/site-visitor-tracker/contents/nginx
+        headers:
+          Authorization: "{{ github_auth_token }}"
+          Accept: "application/vnd.github.v3.raw"
+        return_content: true
+      register: nginx_file
+
+    - name: Update nginx default file
+      ansible.builtin.copy:
+        content: "{{ nginx_file.content }}"
+        dest: /etc/nginx/sites-available/default
+        mode: "0777"
+
+    - name: Update visit proxy_pass with local IP address
+      ansible.builtin.lineinfile:
+        path: /etc/nginx/sites-available/default
+        regexp: "http://internal-ip:8080/add-visit;"
+        line: "proxy_pass http://{{ backend_private_ip_address }}:8080/add-visit;"
+        backrefs: true
+
+    - name: Update user-data proxy_pass with local IP address
+      ansible.builtin.lineinfile:
+        path: /etc/nginx/sites-available/default
+        regexp: "http://internal-ip:8080/user-data;"
+        line: "proxy_pass http://{{ backend_private_ip_address }}:8080/user-data;"
+        backrefs: true
+      notify: Restart nginx
+
+    - name: Create A record in Cloudflare DNS
+      block:
+        - name: POST request add new record
+          ansible.builtin.uri:
+            url: "https://api.cloudflare.com/client/v4/zones/1c57d4c4ca992566c2aae005f5a2fc1c/dns_records"
+            method: POST
+            headers:
+              X-Auth-Email: "{{ email }}"
+              X-Auth-Key: "{{ cloudflare_auth_key }}"
+              Content-Type: "application/json"
+            body: |
+              {
+                "type": "A",
+                "name": "visits.mattmazer.dev",
+                "content": "{{ frontend_public_ip_address }}",
+                "ttl": 3600,
+                "proxied": false
+              }
+            body_format: json
+            return_content: true
+      rescue:
+        - name: Continue execution
+          ansible.builtin.debug:
+            msg: Caught error
+
+    - name: Add domain to hosts file
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        line: "{{ frontend_public_ip_address }} visits.mattmazer.dev"
+
+    - name: Create virtual environment for Certbot
+      ansible.builtin.command:
+        cmd: python3 -m venv /opt/certbot/
+      args:
+        creates: /opt/certbot/bin/python
+
+    - name: Upgrade pip in the Certbot virtual environment
+      ansible.builtin.pip:
+        executable: /opt/certbot/bin/pip
+        name: pip
+
+    - name: Install Certbot in the virtual environment
+      ansible.builtin.pip:
+        executable: /opt/certbot/bin/pip
+        name: certbot
+
+    - name: Install certbot-nginx
+      ansible.builtin.pip:
+        executable: /opt/certbot/bin/pip
+        name: certbot-nginx
+
+    - name: Create a symbolic link for certbot
+      ansible.builtin.file:
+        src: /opt/certbot/bin/certbot
+        dest: /usr/bin/certbot
+        state: link
+
+    - name: Obtain and install SSL certificate
+      ansible.builtin.shell:
+        cmd: /usr/bin/certbot --nginx --non-interactive --agree-tos -m {{ email }} -d visits.mattmazer.dev --redirect
+      notify: Restart nginx
+      tags:
+        - skip_ansible_lint
+
+    - name: Setup certificate renewal cron job
+      ansible.builtin.cron:
+        name: "Certbot renewal"
+        minute: "0"
+        hour: "12"
+        user: "root"
+        job: "/opt/certbot/bin/python -c 'import random; import time; time.sleep(random.random() * 3600)' && sudo certbot renew -q"
+        state: present
+
+  handlers:
+    - name: Restart nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted

@@ -8,7 +8,7 @@ server {
 
         index index.html index.htm index.nginx-debian.html;
 
-        server_name visits.dashboard.mattmazer;
+        server_name visits.mattmazer.dev;
 
         sub_filter_types text/html application/javascript text/javascript;
         sub_filter '{{API_URL_PLACEHOLDER}}' 'https://visits.mattmazer.dev/get-data';

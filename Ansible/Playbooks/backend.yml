@@ -1,25 +1,49 @@
 - name: Backend play
-  hosts: webservers
+  hosts: _ApiServer
   become: true
   vars:
-    db_name: personal_site_user_data
+    ansible_connection: aws_ssm
+    ansible_aws_ssm_bucket_name: ansible-bucket-psite
+    ansible_aws_ssm_region: ap-southeast-2
+    db_name: site_data_store
     db_user: postgres
-    db_password: xxxx
-    db_host: 192.168.64.1
     db_port: 5432
     sql_script_path: /tmp/script.sql
+  vars_files:
+    - secrets.yml
   tasks:
-    - name: Update apt
-      ansible.builtin.apt:
-        update_cache: true
-
     - name: Install required packages
       ansible.builtin.apt:
         name:
           - ca-certificates
           - curl
-        state: present
+          - python3-venv
+          - python3-pip
         update_cache: true
+
+    - name: Create a virtual environment
+      ansible.builtin.command:
+        cmd: python3 -m venv /opt/myenv
+        creates: /opt/myenv
+
+    - name: Install psycopg2-binary, boto3 and botocore in the virtual env
+      ansible.builtin.pip:
+        name:
+          - psycopg2-binary
+          - boto3
+          - botocore
+        virtualenv: /opt/myenv
+
+    - name: Get database host info
+      amazon.aws.rds_instance_info:
+        region: ap-southeast-2
+      environment:
+        PYTHONPATH: /opt/myenv/lib/python3.12/site-packages
+      register: db_host_url
+
+    - name: Set host fact
+      ansible.builtin.set_fact:
+        db_host: "{{ db_host_url.instances[0].endpoint.address }}"
 
     - name: Create directory for apt keyrings
       ansible.builtin.file:
@@ -36,12 +60,8 @@
     - name: Add Docker repository to apt sources
       ansible.builtin.shell: |
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo \"$VERSION_CODENAME\") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-    # TODO need to use shell here. (module needed)
-
-    - name: Update apt
-      ansible.builtin.apt:
-        update_cache: true
+      tags:
+        - skip_ansible_lint
 
     - name: Install Docker engine and related packages
       ansible.builtin.apt:
@@ -51,7 +71,7 @@
           - containerd.io
           - docker-buildx-plugin
           - docker-compose-plugin
-        state: present
+        update_cache: true
 
     - name: Pull docker image
       community.docker.docker_image_pull:
@@ -64,32 +84,15 @@
         image: mattmazer1/psite-server
         detach: true
         env:
-          DATABASE_URL: "postgres://postgres:xxxx@192.168.64.1:5432/personal_site_user_data"
+          DATABASE_URL: "postgres://postgres:{{ db_password }}@{{ db_host }}:5432/{{ db_name }}"
         ports:
-          - "8080-8080"
+          - "8080:8080"
 
     - name: Copy SQL script to remote host
       ansible.builtin.copy:
-        src: /Users/mattmazer/Documents/Projects/site-visitor-tracker/Ansible/script.sql
-        dest: /tmp/script.sql
+        src: /Users/mattmazer/Documents/Projects/site-visitor-tracker/Backend/src/db-scripts/init.sql
+        dest: "{{ sql_script_path }}"
         mode: "0644"
-
-    - name: Install Python 3 and venv
-      ansible.builtin.package:
-        name:
-          - python3
-          - python3-venv
-          - python3-pip
-
-    - name: Create a virtual environment
-      ansible.builtin.command:
-        cmd: python3 -m venv /opt/myenv
-        creates: /opt/myenv
-
-    - name: Install psycopg2-binary in the virtual environment
-      ansible.builtin.pip:
-        name: psycopg2-binary
-        virtualenv: /opt/myenv
 
     - name: Check if initialisation is needed
       community.postgresql.postgresql_query:
@@ -118,4 +121,5 @@
       environment:
         PYTHONPATH: /opt/myenv/lib/python3.12/site-packages
       when: query_result.query_result[0].exists == false
-# TODO need to seperate backend from database by using seperate plays
+      tags:
+        - skip_ansible_lint
