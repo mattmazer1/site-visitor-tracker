@@ -1,12 +1,10 @@
-- name: Frontend play
+- name: Initialise setup
   hosts: _WebsiteServer
   become: true
   vars:
     ansible_connection: aws_ssm
     ansible_aws_ssm_bucket_name: ansible-bucket-psite
     ansible_aws_ssm_region: ap-southeast-2
-  vars_files:
-    - secrets.yml
   tasks:
     - name: Install packages
       ansible.builtin.apt:
@@ -55,6 +53,16 @@
       ansible.builtin.set_fact:
         backend_private_ip_address: "{{ backend_private_ip.instances[0].private_ip_address }}"
 
+- name: Setup nginx
+  hosts: _WebsiteServer
+  become: true
+  vars:
+    ansible_connection: aws_ssm
+    ansible_aws_ssm_bucket_name: ansible-bucket-psite
+    ansible_aws_ssm_region: ap-southeast-2
+  vars_files:
+    - ./vars/secrets.yml
+  tasks:
     - name: Fetch index.html from GitHub
       ansible.builtin.uri:
         url: https://api.github.com/repos/mattmazer1/site-visitor-tracker/contents/Frontend/index.html
@@ -130,6 +138,22 @@
         path: /etc/hosts
         line: "{{ frontend_public_ip_address }} visits.mattmazer.dev"
 
+  handlers:
+    - name: Restart nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
+
+- name: Setup certbot
+  hosts: _WebsiteServer
+  become: true
+  vars:
+    ansible_connection: aws_ssm
+    ansible_aws_ssm_bucket_name: ansible-bucket-psite
+    ansible_aws_ssm_region: ap-southeast-2
+  vars_files:
+    - ./vars/secrets.yml
+  tasks:
     - name: Create virtual environment for Certbot
       ansible.builtin.command:
         cmd: python3 -m venv /opt/certbot/

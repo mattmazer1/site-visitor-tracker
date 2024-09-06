@@ -36,4 +36,5 @@
 #         run: terraform apply
 
 # need to install ansible here
+#need to set aws credentials in env?
 # run ansible palybooks

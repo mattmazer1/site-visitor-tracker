@@ -1,16 +1,12 @@
-- name: Backend play
+- name: Initial setup
   hosts: _ApiServer
   become: true
   vars:
     ansible_connection: aws_ssm
     ansible_aws_ssm_bucket_name: ansible-bucket-psite
     ansible_aws_ssm_region: ap-southeast-2
-    db_name: site_data_store
-    db_user: postgres
-    db_port: 5432
-    sql_script_path: /tmp/script.sql
   vars_files:
-    - secrets.yml
+    - ./vars/secrets.yml
   tasks:
     - name: Install required packages
       ansible.builtin.apt:
@@ -45,6 +41,20 @@
       ansible.builtin.set_fact:
         db_host: "{{ db_host_url.instances[0].endpoint.address }}"
 
+- name: Setup docker
+  hosts: _ApiServer
+  become: true
+  vars:
+    ansible_connection: aws_ssm
+    ansible_aws_ssm_bucket_name: ansible-bucket-psite
+    ansible_aws_ssm_region: ap-southeast-2
+    db_name: site_data_store
+    db_user: postgres
+    db_port: 5432
+  vars_files:
+    - ./vars/secrets.yml
+    - ./var/db_vars.yml
+  tasks:
     - name: Create directory for apt keyrings
       ansible.builtin.file:
         path: /etc/apt/keyrings
@@ -84,10 +94,22 @@
         image: mattmazer1/psite-server
         detach: true
         env:
-          DATABASE_URL: "postgres://postgres:{{ db_password }}@{{ db_host }}:5432/{{ db_name }}"
+          DATABASE_URL: "postgres://{{ db_user }}:{{ db_password }}@{{ db_host }}:{{ db_port }}/{{ db_name }}"
         ports:
           - "8080:8080"
 
+- name: Initialise database
+  hosts: _ApiServer
+  become: true
+  vars:
+    ansible_connection: aws_ssm
+    ansible_aws_ssm_bucket_name: ansible-bucket-psite
+    ansible_aws_ssm_region: ap-southeast-2
+    sql_script_path: /tmp/script.sql
+  vars_files:
+    - ./vars/secrets.yml
+    - ./vars/db_vars.yml
+  tasks:
     - name: Copy SQL script to remote host
       ansible.builtin.copy:
         src: /Users/mattmazer/Documents/Projects/site-visitor-tracker/Backend/src/db-scripts/init.sql
