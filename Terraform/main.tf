@@ -16,7 +16,7 @@ terraform {
     organization = "Matts-personal-projects"
 
     workspaces {
-      name = "testing-two"
+      name = "psite-infra"
     }
   }
 }

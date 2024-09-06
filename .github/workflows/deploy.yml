@@ -1,40 +1,74 @@
-# name: Deployment
-# run-name: Deploying application
-# on:
+name: Deploy and configure infra
+run-name: Setting up infra
+on: [push]
 #   push:
 #     branches:
 #       - "main"
 
-# jobs:
-#   Build-image:
+jobs:
+  Build-infra:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out this repository
+        uses: actions/checkout@v3
+
+      - name: Show current working directory
+        run: pwd
+
+      - name: List files in the current directory
+        run: ls -la
+#       - uses: hashicorp/setup-terraform@v3
+#         with:
+#           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+#       - name: Terraform format
+#         working-directory: ./Terraform
+#         run: terraform fmt -check
+#         continue-on-error: true
+
+#       - name: Terraform validate
+#         working-directory: ./Terraform
+#         run: terraform validate
+
+#       - name: Terraform initialise
+#         working-directory: ./Terraform
+#         run: terraform init
+
+#       - name: Terraform plan
+#         working-directory: ./Terraform
+#         run: terraform plan
+#         continue-on-error: false
+
+#       - name: Terraform apply
+#         working-directory: ./Terraform
+#         run: terraform apply
+#         continue-on-error: false
+
+#   Configure-infra:
 #     runs-on: ubuntu-latest
 
 #     steps:
-#       - name: Checkout code
-#         uses: checkout@v4
+#       - name: Configure AWS credentials
+#         uses: aws-actions/configure-aws-credentials@v2
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: ap-southeast-2
 
-#       - name: Build docker image
-#         run: docker build -t psite-server .
+#       - name: Check out this repository
+#         uses: actions/checkout@v3
 
-#       - name: Push image to dockerhub
-#         run: docker push image
+#       - name: Configure frontend server
+#         uses: dawidd6/action-ansible-playbook@v2
+#         with:
+#           playbook: ./Ansible/Playbooks/frontend.yml
+#           directory: ./Ansible
+#           vault_password: ${{ secrets.VAULT_PASSWORD }}
 
-#   Build-infra:
-#     runs-on: ubuntu-lates
-
-#     steps:
-#       - name: Terraform initialise
-#         run: terraform init
-
-#       - name: Terraform validate
-#         run: terraform validate
-
-#       - name: Terraform format
-#         run: terraform fmt
-
-#       - name: Terraform apply
-#         run: terraform apply
-
-# need to install ansible here
-#need to set aws credentials in env?
-# run ansible palybooks
+#       - name: Configure backend server and db
+#         uses: dawidd6/action-ansible-playbook@v2
+#         with:
+#           playbook: ./Ansible/Playbooks/backend.yml
+#           directory: ./Ansible
+#           vault_password: ${{ secrets.VAULT_PASSWORD }}

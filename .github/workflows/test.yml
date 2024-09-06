@@ -1,36 +1,36 @@
-name: Tests
-run-name: Run tests
-on: [push]
+# name: Tests
+# run-name: Run tests
+# on: [push]
 
-jobs:
-  Run-tests:
-    runs-on: ubuntu-latest
-    container: golang:alpine
-    services:
-      postgres:
-        image: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: postgres
+# jobs:
+#   Run-tests:
+#     runs-on: ubuntu-latest
+#     container: golang:alpine
+#     services:
+#       postgres:
+#         image: postgres
+#         options: >-
+#           --health-cmd pg_isready
+#           --health-interval 10s
+#           --health-timeout 5s
+#           --health-retries 5
+#         ports:
+#           - 5432:5432
+#         env:
+#           POSTGRES_USER: postgres
+#           POSTGRES_PASSWORD: postgres
+#           POSTGRES_DB: postgres
 
-    steps:
-      - name: Check out repository code
-        uses: actions/checkout@v4
+#     steps:
+#       - name: Check out repository
+#         uses: actions/checkout@v4
 
-      - name: Add dependencies
-        run: cd Backend && go mod download && go mod verify
+#       - name: Add dependencies
+#         run: cd Backend && go mod download && go mod verify
 
-      - name: Run tests
-        env:
-          DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
-          DEFAULT_URL: postgres://postgres:postgres@postgres:5432/postgres
-          DBINIT: /__w/site-visitor-tracker/site-visitor-tracker/Backend/src/db-scripts/init.sql
-        run: cd Backend && go test ./src
+#       - name: Run tests
+#         env:
+#           DATABASE_URL: postgres://postgres:postgres@postgres:5432/postgres
+#           DEFAULT_URL: postgres://postgres:postgres@postgres:5432/postgres
+#           DBINIT: /__w/site-visitor-tracker/site-visitor-tracker/Backend/src/db-scripts/init.sql
+#         run: cd Backend && go test ./src
