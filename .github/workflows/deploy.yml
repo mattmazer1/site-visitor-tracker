@@ -13,38 +13,32 @@ jobs:
       - name: Check out this repository
         uses: actions/checkout@v3
 
-      - name: Show current working directory
-        run: pwd
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-      - name: List files in the current directory
-        run: ls -la
-#       - uses: hashicorp/setup-terraform@v3
-#         with:
-#           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+      - name: Terraform format
+        working-directory: ./Terraform
+        run: terraform fmt -check
+        continue-on-error: true
 
-#       - name: Terraform format
-#         working-directory: ./Terraform
-#         run: terraform fmt -check
-#         continue-on-error: true
+      - name: Terraform validate
+        working-directory: ./Terraform
+        run: terraform validate
 
-#       - name: Terraform validate
-#         working-directory: ./Terraform
-#         run: terraform validate
+      - name: Terraform initialise
+        working-directory: ./Terraform
+        run: terraform init
 
-#       - name: Terraform initialise
-#         working-directory: ./Terraform
-#         run: terraform init
+      - name: Terraform plan
+        working-directory: ./Terraform
+        run: terraform plan
+        continue-on-error: false
 
-#       - name: Terraform plan
-#         working-directory: ./Terraform
-#         run: terraform plan
-#         continue-on-error: false
-
-#       - name: Terraform apply
-#         working-directory: ./Terraform
-#         run: terraform apply
-#         continue-on-error: false
-
+      - name: Terraform apply
+        working-directory: ./Terraform
+        run: terraform apply
+        continue-on-error: false
 #   Configure-infra:
 #     runs-on: ubuntu-latest
 

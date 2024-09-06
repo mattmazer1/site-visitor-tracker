@@ -112,7 +112,7 @@
   tasks:
     - name: Copy SQL script to remote host
       ansible.builtin.copy:
-        src: /Users/mattmazer/Documents/Projects/site-visitor-tracker/Backend/src/db-scripts/init.sql
+        src: /home/runner/work/site-visitor-tracker/site-visitor-tracker/Backend/src/db-scripts/init.sql
         dest: "{{ sql_script_path }}"
         mode: "0644"
 
