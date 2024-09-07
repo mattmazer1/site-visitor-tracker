@@ -70,19 +70,14 @@ jobs:
         working-directory: ${{ github.workspace }}/Ansible
         run: echo ${{ secrets.VAULT_PASSWORD }} > vault_password.txt
 
-      - name: Configure frontend server
+      # - name: Configure frontend server
+      #   working-directory: ${{ github.workspace }}/Ansible
+      #   run: ansible-playbook -i aws_ec2.yml --vault-password-file vault_password.txt ./Playbooks/frontend.yml -vvv
+
+      - name: Configure backend server and db
         working-directory: ${{ github.workspace }}/Ansible
-        run: ansible-playbook -i aws_ec2.yml --vault-password-file vault_password.txt ./Playbooks/frontend.yml -vvv
+        run: ansible-playbook -i aws_ec2.yml --vault-password-file vault_password.txt ./Playbooks/backend.yml -vvv
 
       - name: Delete vault password file
         working-directory: ${{ github.workspace }}/Ansible
         run: rm vault_password.txt
-
-    #   - name: Configure backend server and db
-    #     uses: dawidd6/action-ansible-playbook@v2
-    #     with:
-    #       playbook: ${{ github.workspace }}/Ansible/Playbooks/backend.yml
-    #       directory: ${{ github.workspace }}/Ansible
-    #       vault_password: ${{ secrets.VAULT_PASSWORD }}
-    #   inventory: ${{ github.workspace }}/Ansible/aws_ec2.yml
-    #   requirements: ${{ github.workspace }}/Ansible/requirements.yml
