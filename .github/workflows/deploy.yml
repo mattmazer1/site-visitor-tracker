@@ -52,6 +52,16 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-southeast-2
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install python dependencies
+        run: |
+          pip install boto3
+          pip install botocore
+
       - name: Check out this repository
         uses: actions/checkout@v3
 
@@ -61,7 +71,7 @@ jobs:
           playbook: ${{ github.workspace }}/Ansible/Playbooks/frontend.yml
           directory: ${{ github.workspace }}/Ansible
           vault_password: ${{ secrets.VAULT_PASSWORD }}
-          inventory: ${{ github.workspace }}/Ansible/aws_ec2.yml
+          #   inventory: ${{ github.workspace }}/Ansible/aws_ec2.yml
           requirements: ${{ github.workspace }}/Ansible/requirements.yml
           options: |
             --inventory aws_ec2.yml
