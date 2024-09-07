@@ -63,6 +63,9 @@ jobs:
           vault_password: ${{ secrets.VAULT_PASSWORD }}
           inventory: ${{ github.workspace }}/Ansible/aws_ec2.yml
           requirements: ${{ github.workspace }}/Ansible/requirements.yml
+          options: |
+            --inventory aws_ec2.yml
+            --verbose
 
     #   - name: Configure backend server and db
     #     uses: dawidd6/action-ansible-playbook@v2
