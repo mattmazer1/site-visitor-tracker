@@ -1,47 +1,48 @@
 name: Deploy and configure infra
 run-name: Setting up infra
-on: [push]
-#   push:
-#     branches:
-#       - "main"
+on:
+  workflow_run:
+    workflows: [Push to DockerHub]
+    types: [completed]
 
 jobs:
-  #   Build-infra:
-  #     runs-on: ubuntu-latest
+  Build-infra:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
-  #     steps:
-  #       - name: Check out this repository
-  #         uses: actions/checkout@v3
+    steps:
+      - name: Check out this repository
+        uses: actions/checkout@v3
 
-  #       - uses: hashicorp/setup-terraform@v3
-  #         with:
-  #           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-  #       - name: Terraform format
-  #         working-directory: ./Terraform
-  #         run: terraform fmt -check
-  #         continue-on-error: true
+      - name: Terraform format
+        working-directory: ./Terraform
+        run: terraform fmt -check
+        continue-on-error: true
 
-  #       - name: Terraform initialise
-  #         working-directory: ./Terraform
-  #         run: terraform init
+      - name: Terraform initialise
+        working-directory: ./Terraform
+        run: terraform init
 
-  #       - name: Terraform validate
-  #         working-directory: ./Terraform
-  #         run: terraform validate
+      - name: Terraform validate
+        working-directory: ./Terraform
+        run: terraform validate
 
-  #       - name: Terraform plan
-  #         working-directory: ./Terraform
-  #         run: terraform plan
-  #         continue-on-error: false
+      - name: Terraform plan
+        working-directory: ./Terraform
+        run: terraform plan
+        continue-on-error: false
 
-  #       - name: Terraform apply
-  #         working-directory: ./Terraform
-  #         run: terraform apply -auto-approve
-  #         continue-on-error: false
+      - name: Terraform apply
+        working-directory: ./Terraform
+        run: terraform apply -auto-approve
+        continue-on-error: false
 
   Configure-infra:
-    # needs: Build-infra
+    needs: Build-infra
     runs-on: ubuntu-latest
 
     steps:
@@ -70,9 +71,9 @@ jobs:
         working-directory: ${{ github.workspace }}/Ansible
         run: echo ${{ secrets.VAULT_PASSWORD }} > vault_password.txt
 
-      # - name: Configure frontend server
-      #   working-directory: ${{ github.workspace }}/Ansible
-      #   run: ansible-playbook -i aws_ec2.yml --vault-password-file vault_password.txt ./Playbooks/frontend.yml -vvv
+      - name: Configure frontend server
+        working-directory: ${{ github.workspace }}/Ansible
+        run: ansible-playbook -i aws_ec2.yml --vault-password-file vault_password.txt ./Playbooks/frontend.yml -vvv
 
       - name: Configure backend server and db
         working-directory: ${{ github.workspace }}/Ansible
