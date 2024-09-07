@@ -57,15 +57,11 @@ jobs:
         with:
           python-version: "3.10"
 
-      - name: Install Ansible
+      - name: Install Ansible and its dependancies
         run: |
-          sudo apt-get update
-          sudo apt install software-properties-common
-          sudo add-apt-repository --yes --update ppa:ansible/ansible
-          sudo apt-get install -y ansible
-
-      - name: Install python dependencies
-        run: /opt/pipx/venvs/ansible-core/bin/pip install boto3 botocore
+          pip install ansible
+          pip install boto3
+          pip install botocore
 
       - name: Check out this repository
         uses: actions/checkout@v3
