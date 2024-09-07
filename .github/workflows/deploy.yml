@@ -69,12 +69,12 @@ jobs:
           sudo add-apt-repository --yes --update ppa:ansible/ansible
           sudo apt-get install -y ansible
 
+      - name: Check out this repository
+        uses: actions/checkout@v3
+
       - name: Create vault password file
         working-directory: ${{ github.workspace }}/Ansible
         run: echo ${{ secrets.VAULT_PASSWORD }} > vault_password.txt
-
-      - name: Check out this repository
-        uses: actions/checkout@v3
 
       - name: Configure frontend server
         working-directory: ${{ github.workspace }}/Ansible
