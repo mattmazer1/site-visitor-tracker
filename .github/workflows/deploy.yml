@@ -58,15 +58,14 @@ jobs:
       - name: Configure frontend server
         uses: dawidd6/action-ansible-playbook@v2
         with:
-          #   playbook: ./Ansible/Playbooks/frontend.yml
           playbook: ${{ github.workspace }}/Ansible/Playbooks/frontend.yml
           directory: ./Ansible
           vault_password: ${{ secrets.VAULT_PASSWORD }}
+          inventory: ${{ github.workspace }}/Ansible/aws_ec2.yml
 
       - name: Configure backend server and db
         uses: dawidd6/action-ansible-playbook@v2
         with:
-          #   playbook: ./Ansible/Playbooks/backend.yml
           playbook: ${{ github.workspace }}/Ansible/Playbooks/backend.yml
           directory: ./Ansible
           vault_password: ${{ secrets.VAULT_PASSWORD }}
